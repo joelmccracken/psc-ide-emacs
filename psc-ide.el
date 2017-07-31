@@ -398,7 +398,7 @@ and passed to `start-process`."
                                               '("--log-level" "debug")
                                             '("--debug")))))
     (if path
-        (remove nil `(,@cmd "-p" ,port "-d" ,directory "--output-directory" ,psc-ide-output-directory ,@debug-flags ,@psc-ide-source-globs))
+        (remove nil `(,@cmd "-p" ,port "--editor-mode" "-d" ,directory "--output-directory" ,psc-ide-output-directory ,@debug-flags ,@psc-ide-source-globs))
       (error (s-join " " '("Couldn't locate psc ide executable. You"
                            "could either customize the psc-ide-purs-executable"
                            " or psc-ide-server-executable if psc-ide-use-purs is nil,"
