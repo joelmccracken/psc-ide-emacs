@@ -221,12 +221,22 @@ Defaults to \"output/\" and should only be changed with
                 ;; Don't add an import when the option to do so is disabled
                 (not psc-ide-add-import-on-completion)
                 ;; or when a qualified identifier was completed
-                (or (get-text-property 0 :qualifier arg) (s-contains-p "." (company-grab-symbol)))
+                (null (psc-ide-modules-for-qualifier (get-text-property 0 :qualifier arg)))
                 ;; Don't attempt to import Prim members
                 (string= (get-text-property 0 :module arg) "Prim"))
-         (psc-ide-add-import-impl arg (vector
-                                       (psc-ide-filter-modules
-                                        (list (get-text-property 0 :module arg))))))))))
+         ;; If there's a '.', it's a qualified import
+         (if (or (get-text-property 0 :qualifier arg) (s-contains-p "." (company-grab-symbol)))
+             (progn
+               (message "wtf is this: %s" arg)
+               (message "wtf is this 2: %s" (get-text-property 1 arg))
+               (message "wtf is this 3: %s" (get-text-property 0 :qualifier arg))
+               (message "wtf is this 4: %s" (get-text-property 0 :module arg))
+              (psc-ide-add-import-qualified-impl arg (get-text-property 0 :module arg))
+              )
+           ;; else import the thing by itself
+           (psc-ide-add-import-impl arg (vector
+                                           (psc-ide-filter-modules
+                                            (list (get-text-property 0 :module arg)))))))))))
 
 (defun psc-ide-server-start (dir-name)
   "Start 'psc-ide-server' in DIR-NAME and load all modules."
@@ -282,6 +292,8 @@ Defaults to \"output/\" and should only be changed with
   (interactive)
   (-if-let (splitted (psc-ide-split-qualifier (psc-ide-ident-at-point)))
       (let-alist splitted
+        (message "identifier: %s" .identifier)
+        (message "qualifier: %s" .qualifier)
         (psc-ide-add-import-qualified-impl .identifier .qualifier))
     (psc-ide-add-import-impl (psc-ide-ident-at-point))))
 
@@ -608,6 +620,8 @@ passes it into the callback"
   "Annotate a completion from psc-ide with `text-properties'.
 PARSED-IMPORTS are used to annotate the COMPLETION with qualifiers."
   (let-alist completion
+    (message "wtf is ikmporsts: %s" parsed-imports)
+    (message "wtf is completion: %s" completion)
     (let* ((qualifier (psc-ide-qualifier-for-module .module parsed-imports))
            (identifier  (if (and psc-ide-add-qualification-on-completion
                                  qualifier
